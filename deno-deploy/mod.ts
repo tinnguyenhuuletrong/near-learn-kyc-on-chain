@@ -1,6 +1,7 @@
 import * as NEARAPI from "./lib/near-api-js.min.js";
 async function handleRequest(request: Request) {
-  await import("./lib/near-api-js.min.js");
+  let dummy = NEARAPI;
+
   const nearAPI = (window as any).nearApi;
   const accName = "example-account.testnet";
 
