@@ -10,10 +10,8 @@ import {
 import { storage, Context, VMContext, logging } from "near-sdk-as";
 import { EStatus, KYCContract } from "../model";
 
-let contract: KYCContract;
-
 beforeEach(() => {
-  contract = initContract("test", "bp_clientid_test");
+  initContract("test", "bp_clientid_test");
 });
 
 describe("basic", () => {
@@ -96,7 +94,6 @@ describe("acl", () => {
   it("add operator key", () => {
     addOperator("p1");
     let res = listOperator();
-    // log(res);
     expect(res.length).toBe(2);
   });
 

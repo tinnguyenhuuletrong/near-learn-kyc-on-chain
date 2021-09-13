@@ -24,37 +24,46 @@ export class KYCCandidate {
   approvedAt: u64;
 }
 
+export const candidateMap: PersistentUnorderedMap<
+  string,
+  KYCCandidate
+> = new PersistentUnorderedMap<string, KYCCandidate>("c");
+export const refIdMap: PersistentMap<string, string> = new PersistentMap<
+  string,
+  string
+>("r");
+export const operatorPubKeys: PersistentSet<string> = new PersistentSet<string>(
+  "o"
+);
+
 @nearBindgen
 export class KYCContract {
   bizName: string;
   bizBlockpassClientId: string;
   owner: string;
-  operatorPubKeys: PersistentSet<string>;
-  candidateMap: PersistentUnorderedMap<string, KYCCandidate>;
-  refIdMap: PersistentMap<string, string>;
 
   constructor(bizName: string, bizBlockpassClientId: string) {
     this.owner = context.sender;
     this.bizName = bizName;
     this.bizBlockpassClientId = bizBlockpassClientId;
-    this.candidateMap = new PersistentUnorderedMap<string, KYCCandidate>("c");
-    this.refIdMap = new PersistentMap<string, string>("r");
-    this.operatorPubKeys = new PersistentSet<string>("o");
   }
 
   // ------------------- //
   // Candidate
   // ------------------- //
+  hasCandidate(accId: string): boolean {
+    return candidateMap.contains(accId) === true;
+  }
 
   getCandidateByAccId(accId: string): KYCCandidate {
     this._ensureHasAcc(accId);
-    return this.candidateMap.get(accId) as KYCCandidate;
+    return candidateMap.get(accId) as KYCCandidate;
   }
 
   getCandidateByRefId(refId: string): KYCCandidate {
-    const accId = this.refIdMap.get(refId);
+    const accId = refIdMap.get(refId);
     assert(!!accId, "Ref Id not exists");
-    return this.candidateMap.get(accId as string) as KYCCandidate;
+    return candidateMap.get(accId as string) as KYCCandidate;
   }
 
   addCandidate(): KYCCandidate {
@@ -68,8 +77,8 @@ export class KYCContract {
     newCandidate.nearAddress = accId;
     newCandidate.refId = base58.encode(math.sha256(util.stringToBytes(accId)));
 
-    this.candidateMap.set(accId, newCandidate);
-    this.refIdMap.set(newCandidate.refId, accId);
+    candidateMap.set(accId, newCandidate);
+    refIdMap.set(newCandidate.refId, accId);
     return newCandidate;
   }
 
@@ -94,7 +103,7 @@ export class KYCContract {
         break;
     }
 
-    this.candidateMap.set(ins.nearAddress, ins);
+    candidateMap.set(ins.nearAddress, ins);
     return ins;
   }
 
@@ -105,18 +114,18 @@ export class KYCContract {
   addOperatorPubKey(pubKey: string): void {
     this._isOwner();
     this._ensureOperatorNotExist(pubKey);
-    this.operatorPubKeys.add(pubKey);
+    operatorPubKeys.add(pubKey);
   }
 
   removeOperatorPubKey(pubKey: string): void {
     this._isOwner();
     this._ensureOperatorPubKey(pubKey);
-    this.operatorPubKeys.delete(pubKey);
+    operatorPubKeys.delete(pubKey);
   }
 
   listOperatorPubKey(): string[] {
     this._isOwner();
-    return this.operatorPubKeys.values();
+    return operatorPubKeys.values();
   }
 
   // ------------------- //
@@ -128,19 +137,19 @@ export class KYCContract {
   }
 
   private _ensureHasAcc(accId: string): void {
-    assert(this.candidateMap.contains(accId), "Candidate Id not exists");
+    assert(candidateMap.contains(accId), "Candidate Id not exists");
   }
   private _ensureHasRefId(refId: string): void {
-    assert(this.refIdMap.contains(refId), "Ref Id not exists");
+    assert(refIdMap.contains(refId), "Ref Id not exists");
   }
   private _ensureNotHasAcc(accId: string): void {
-    assert(!this.candidateMap.contains(accId), "Candidate Id already exists");
+    assert(!candidateMap.contains(accId), "Candidate Id already exists");
   }
   private _ensureOperatorNotExist(pubKey: string): void {
-    assert(!this.operatorPubKeys.has(pubKey), "Pub key is exists");
+    assert(!operatorPubKeys.has(pubKey), "Pub key is exists");
   }
   private _ensureOperatorPubKey(pubKey: string): void {
-    assert(this.operatorPubKeys.has(pubKey), "Pub key is not exists");
+    assert(operatorPubKeys.has(pubKey), "Pub key is not exists");
   }
   private _isOwner(): void {
     // === will failed ?

@@ -17,6 +17,7 @@ export function initContract(
   contract = new KYCContract(bizName, bizBlockpassClientId);
   storage.set("init", true);
   contract.addOperatorPubKey(context.senderPublicKey);
+  storage.set("_ins", contract);
   return contract;
 }
 
@@ -24,11 +25,23 @@ export function initContract(
 /* Read */
 /***********/
 
-export function getKycStatus(): KYCCandidate {
+export function getKycStatus(accId: string = context.sender): KYCCandidate {
   _isInit();
-  let accId = context.sender;
   const ins = contract.getCandidateByAccId(accId) as KYCCandidate;
   return ins;
+}
+
+export function hasCandidate(accId: string): boolean {
+  _isInit();
+  return contract.hasCandidate(accId);
+}
+
+export function info(): string {
+  _isInit();
+  const owner = contract.owner;
+  const bizName = contract.bizName;
+  const bizBlockpassClientId = contract.bizBlockpassClientId;
+  return `${owner}: ${bizName}: ${bizBlockpassClientId}`;
 }
 
 /***********/
@@ -71,4 +84,5 @@ function _isInit(): void {
     storage.hasKey("init") && storage.getSome<bool>("init") == true,
     "The contract should be initialized before usage."
   );
+  contract = storage.getSome<KYCContract>("_ins");
 }

@@ -11,6 +11,7 @@ import getConfig from "./config"
 import SignedOut from "./components/SignedOut.vue"
 import SignedIn from "./components/SignedIn.vue"
 
+// eslint-disable-next-line no-undef
 const nearConfig = getConfig(process.env.NODE_ENV || "development")
 console.log(
   `networkId:${nearConfig.networkId} CONTRACT_NAME:${nearConfig.contractName}`

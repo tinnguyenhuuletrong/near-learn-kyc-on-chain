@@ -135,7 +135,7 @@ export default {
         })
     },
 
-    saveGreeting: async function (event) {
+    saveGreeting: async function () {
       // fired on form submit button used to update the greeting
 
       // disable the form while the value gets updated on-chain
