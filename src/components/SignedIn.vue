@@ -16,7 +16,10 @@
         Near Acc: <label>{{ accountId }}</label>
       </h5>
       <div v-if="shouldShowKycButton" class="register-container">
-        <button v-on:click="startKyc">Start KYC</button>
+        <VueLoadingButton 
+          @click.native="startKyc"
+          :loading="isLoading"
+        >Start KYC</VueLoadingButton>
         <div id="blockpass-kyc-connect" />
       </div>
       <div v-if="isApproved">
@@ -58,7 +61,7 @@
 
 <script>
 import { logout } from "../utils";
-
+import VueLoadingButton from 'vue-loading-button'
 import Notification from "./Notification.vue";
 
 export default {
@@ -71,6 +74,7 @@ export default {
   },
 
   components: {
+    VueLoadingButton,
     Notification,
   },
 
@@ -83,7 +87,8 @@ export default {
       bizName: "",
       clientId: "",
       scHasCandidate: false,
-      scRefId: ""
+      scRefId: "",
+      isLoading: false
     };
   },
 
@@ -178,6 +183,8 @@ export default {
     // },
 
     async startKyc() {
+      this.isLoading = true
+      
       try {
         if(!this.scHasCandidate) {
           const res = await window.contract.addCandidate({
@@ -190,6 +197,7 @@ export default {
         alert(error.message);
       }
 
+      this.isLoading = false
 
       // start KYC widget
       this._startWidget(this.scRefId)

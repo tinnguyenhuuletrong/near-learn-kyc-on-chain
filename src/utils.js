@@ -2,7 +2,7 @@ import { connect, Contract, keyStores, WalletConnection } from "near-api-js";
 import getConfig from "./config";
 
 // eslint-disable-next-line no-undef
-const nearConfig = getConfig(process.env.NODE_ENV || "development");
+const nearConfig = getConfig(process.env.NEAR_ENV || "development");
 
 console.log(nearConfig);
 
