@@ -60,10 +60,7 @@ async function handleRequest(request: Request) {
       accName: ACC_ID,
       balance,
     },
-    env: {
-      DENO_REGION: Deno.env.DENO_REGION,
-      DENO_DEPLOYMENT_ID: Deno.env.DENO_DEPLOYMENT_ID,
-    },
+    env: Deno.env,
   });
 
   return new Response(json, {
