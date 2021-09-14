@@ -34,11 +34,11 @@ Permission control
 ```
 
 Done
-[x] SC
-[x] Web
-[x] Integrate [Blockpass KYC Service](https://www.blockpass.org/)
-[x] Deno cloud function - integrate near sdk
-[ ][webhook](https://docs.blockpass.org/docs/connect/KYCC-Console-Service-Tab-Webhooks) from Blockpass => update kyc Status
+- [x] SC
+- [x] Web
+- [x] Integrate [Blockpass KYC Service](https://www.blockpass.org/)
+- [x] Deno cloud function - integrate near sdk
+- [ ][webhook](https://docs.blockpass.org/docs/connect/KYCC-Console-Service-Tab-Webhooks) from Blockpass => update kyc Status
 
 # Quick Start
 
