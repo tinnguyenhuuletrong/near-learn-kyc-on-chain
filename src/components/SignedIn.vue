@@ -1,15 +1,29 @@
 <template>
   <div>
-    <button class="link" style="float: right" v-on:click="logout">Sign out</button>
+    <button class="link" style="float: right" v-on:click="logout">
+      Sign out
+    </button>
     <main>
-      <h1>
+      <h1 v-if="bizName">
+        BizName:
         <label
           for="greeting"
           style="color: var(--secondary);border-bottom: 2px solid var(--secondary);"
-        >{{ savedGreeting }}</label>
-        {{ accountId }}
+        >{{ bizName }}</label
+        >
       </h1>
-      <form v-on:submit.prevent="saveGreeting">
+      <h5>
+        Near Acc: <label>{{ accountId }}</label>
+      </h5>
+      <div v-if="shouldShowKycButton" class="register-container">
+        <button v-on:click="startKyc">Start KYC</button>
+        <div id="blockpass-kyc-connect" />
+      </div>
+      <div v-if="isApproved">
+        <h2> Congratulation your KYC check completed </h2>
+        <h6>  * unlock some action </h6>
+      </div>
+      <!-- <form v-on:submit.prevent="saveGreeting">
         <fieldset ref="fieldset">
           <label
             for="greeting"
@@ -20,56 +34,7 @@
             <button id="save" style="border-radius:0 5px 5px 0">Save</button>
           </div>
         </fieldset>
-      </form>
-      <p>Look at that! A Hello World app! This greeting is stored on the NEAR blockchain. Check it out:</p>
-      <ol>
-        <li>
-          Look in
-          <code>src/App.vue</code> and
-          <code>src/utils.js</code>
-          - you'll see
-          <code>getGreeting</code>
-          and
-          <code>setGreeting</code> being called on
-          <code>contract</code>. What's this?
-        </li>
-        <li>
-          Ultimately, this
-          <code>contract</code> code is defined in
-          <code>assembly/main.ts</code>
-          - this is the source code for your
-          <a
-            target="_blank"
-            rel="noreferrer"
-            href="https://docs.near.org/docs/develop/contracts/overview"
-          >smart contract</a>.
-        </li>
-        <li>
-          When you run
-          <code>npm run dev</code> or
-          <code>yarn dev</code>, the code in
-          <code>assembly/main.ts</code>
-          gets deployed to the NEAR testnet. You can see how this happens by looking in
-          <code>package.json</code>
-          at the
-          <code>scripts</code> section to find the
-          <code>dev</code> command.
-        </li>
-      </ol>
-      <hr />
-      <p>
-        To keep learning, check out
-        <a
-          target="_blank"
-          rel="noreferrer"
-          href="https://docs.near.org"
-        >the NEAR docs</a> or look through some
-        <a
-          target="_blank"
-          rel="noreferrer"
-          href="https://examples.near.org"
-        >example apps</a>.
-      </p>
+      </form> -->
     </main>
 
     <Notification
@@ -83,17 +48,25 @@
   </div>
 </template>
 
-<script>
-import { logout } from "../utils"
+<style>
+.register-container {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+</style>
 
-import Notification from "./Notification.vue"
+<script>
+import { logout } from "../utils";
+
+import Notification from "./Notification.vue";
 
 export default {
   name: "SignedIn",
 
   beforeMount() {
     if (this.isSignedIn) {
-      this.retrieveSavedGreeting()
+      this.retrieveInfo();
     }
   },
 
@@ -101,79 +74,144 @@ export default {
     Notification,
   },
 
-  data: function () {
+  data: function() {
     return {
+      kycStatus: "",
       savedGreeting: "",
       newGreeting: "",
       notificationVisible: false,
-    }
+      bizName: "",
+      clientId: "",
+      scHasCandidate: false,
+      scRefId: ""
+    };
   },
 
   computed: {
     isSignedIn() {
-      return window.walletConnection? window.walletConnection.isSignedIn(): false
+      return window.walletConnection
+        ? window.walletConnection.isSignedIn()
+        : false;
     },
     accountId() {
-      return window.accountId
+      return window.accountId;
     },
     contractId() {
-      return window.contract? window.contract.contractId: null
+      return window.contract ? window.contract.contractId : null;
     },
     networkId() {
-      return window.networkId
+      return window.networkId;
     },
+    shouldShowKycButton() {
+      return ["not_found", "waiting"].includes(this.kycStatus);
+    },
+    isApproved() {
+      return ["approved"].includes(this.kycStatus);
+    }
   },
 
   methods: {
-    retrieveSavedGreeting() {
-      //retrieve greeting
-      window.contract
-        .getGreeting({ accountId: window.accountId })
-        .then((greetingFromContract) => {
-          this.savedGreeting = greetingFromContract
-          this.newGreeting = greetingFromContract
-        })
+    async retrieveInfo() {
+      const scInfo = await window.contract.info();
+      console.log(scInfo);
+      this.bizName = scInfo.bizName;
+      this.clientId = scInfo.bizBlockpassClientId;
+
+      const hasCandidate = await window.contract.hasCandidate({
+        accId: this.accountId,
+      });
+      this.scHasCandidate = hasCandidate;
+      if (!hasCandidate) this.kycStatus = "not_found";
+      else {
+        const kycStatusInfo = await window.contract.getKycStatus({
+          accId: this.accountId,
+        });
+        console.log(kycStatusInfo);
+        switch (kycStatusInfo.status) {
+        case 0:
+          this.kycStatus = "waiting";
+          break;
+        case 1:
+          this.kycStatus = "approved";
+          break;
+        }
+        this.scRefId = kycStatusInfo.refId
+      }
     },
 
-    saveGreeting: async function () {
-      // fired on form submit button used to update the greeting
+    // saveGreeting: async function () {
+    //   // fired on form submit button used to update the greeting
 
-      // disable the form while the value gets updated on-chain
-      this.$refs.fieldset.disabled = true
+    //   // disable the form while the value gets updated on-chain
+    //   this.$refs.fieldset.disabled = true
 
+    //   try {
+
+    //     // make an update call to the smart contract
+    //     await window.contract.setGreeting({
+    //       // pass the new greeting
+    //       message: this.newGreeting,
+    //     })
+    //   } catch (e) {
+    //     alert(
+    //       "Something went wrong! " +
+    //         "Maybe you need to sign out and back in? " +
+    //         "Check your browser console for more info."
+    //     )
+    //     throw e //re-throw
+    //   } finally {
+    //     // re-enable the form, whether the call succeeded or failed
+    //     this.$refs.fieldset.disabled = false
+    //   }
+
+    //   // update savedGreeting with persisted value
+    //   this.savedGreeting = this.newGreeting
+
+    //   this.notificationVisible = true //show new notification
+
+    //   // remove Notification again after css animation completes
+    //   // this allows it to be shown again next time the form is submitted
+    //   setTimeout(() => {
+    //     this.notificationVisible = false
+    //   }, 11000)
+
+    // },
+
+    async startKyc() {
       try {
-        
-        // make an update call to the smart contract
-        await window.contract.setGreeting({
-          // pass the new greeting
-          message: this.newGreeting,
-        })
-      } catch (e) {
-        alert(
-          "Something went wrong! " +
-            "Maybe you need to sign out and back in? " +
-            "Check your browser console for more info."
-        )
-        throw e //re-throw
-      } finally {
-        // re-enable the form, whether the call succeeded or failed
-        this.$refs.fieldset.disabled = false
+        if(!this.scHasCandidate) {
+          const res = await window.contract.addCandidate({
+            accountId: this.accountId,
+          });
+          console.log(res);
+          this.scRefId = res
+        }
+      } catch (error) {
+        alert(error.message);
       }
 
-      // update savedGreeting with persisted value
-      this.savedGreeting = this.newGreeting
 
-      this.notificationVisible = true //show new notification
+      // start KYC widget
+      this._startWidget(this.scRefId)
+    },
 
-      // remove Notification again after css animation completes
-      // this allows it to be shown again next time the form is submitted
-      setTimeout(() => {
-        this.notificationVisible = false
-      }, 11000)
+    _startWidget(refId) {
+      console.log(refId)
+      // cleanup
+      const oldNode = document.getElementById("blockpass-kyc-connect");
+      const newNode = oldNode.cloneNode(true);
+      oldNode.parentNode.replaceChild(newNode, oldNode);
 
+      // eslint-disable-next-line no-undef
+      const sdk = new BlockpassKYCConnect(this.clientId, {
+        local_user_id: refId,
+      });
+      sdk.startKYCConnect();
+      const btn = document.getElementById("blockpass-kyc-connect");
+      btn && btn.click && btn.click();
     },
 
     logout: logout,
   },
-}
+};
 </script>

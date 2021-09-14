@@ -36,12 +36,22 @@ export function hasCandidate(accId: string): boolean {
   return contract.hasCandidate(accId);
 }
 
-export function info(): string {
+@nearBindgen
+export class InfoReturnObj {
+  owner: string;
+  bizName: string;
+  bizBlockpassClientId: string;
+}
+export function info(): InfoReturnObj {
   _isInit();
   const owner = contract.owner;
   const bizName = contract.bizName;
   const bizBlockpassClientId = contract.bizBlockpassClientId;
-  return `${owner}: ${bizName}: ${bizBlockpassClientId}`;
+  const res = new InfoReturnObj();
+  res.owner = owner;
+  res.bizName = bizName;
+  res.bizBlockpassClientId = bizBlockpassClientId;
+  return res;
 }
 
 /***********/
