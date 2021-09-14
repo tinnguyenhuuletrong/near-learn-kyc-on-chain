@@ -16,6 +16,9 @@ const PRIVATE_KEY =
 const CONTRACT_ID = "dev-1631519031086-9364402";
 
 async function handleRequest(request: Request) {
+  const method = request.method;
+  const contentType = request.headers.get("content-type");
+
   // connect to NEAR
   const near = await connect(config);
 
@@ -45,12 +48,22 @@ async function handleRequest(request: Request) {
   // create wallet connection
   // const wallet = new WalletConnection(near);
   const balance = await account.getAccountBalance();
-  const body = await request.json();
+  let bodyData;
 
+  if (contentType.includes("application/json")) {
+    bodyData = await request.json();
+  }
   const json = JSON.stringify({
-    accName: ACC_ID,
-    balance,
-    body,
+    method,
+    reqbody: bodyData,
+    near: {
+      accName: ACC_ID,
+      balance,
+    },
+    env: {
+      DENO_REGION: process.env.DENO_REGION,
+      DENO_DEPLOYMENT_ID: process.env.DENO_DEPLOYMENT_ID,
+    },
   });
 
   return new Response(json, {
