@@ -60,7 +60,7 @@ async function handleRequest(request: Request) {
       accName: ACC_ID,
       balance,
     },
-    env: Deno.env,
+    env: Deno.env.toObject(),
     _t: Date.now(),
   });
 
