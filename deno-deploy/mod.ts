@@ -17,7 +17,7 @@ const CONTRACT_ID = "dev-1631519031086-9364402";
 
 async function handleRequest(request: Request) {
   const method = request.method;
-  const contentType = request.headers.get("content-type");
+  const contentType = request.headers.get("content-type") ?? "";
 
   // connect to NEAR
   const near = await connect(config);
