@@ -61,6 +61,7 @@ async function handleRequest(request: Request) {
       balance,
     },
     env: Deno.env,
+    _t: Date.now(),
   });
 
   return new Response(json, {
