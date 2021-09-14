@@ -1,1 +1,0 @@
-deployctl run ./mod.ts
