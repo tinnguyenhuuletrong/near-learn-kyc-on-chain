@@ -61,8 +61,8 @@ async function handleRequest(request: Request) {
       balance,
     },
     env: {
-      DENO_REGION: process.env.DENO_REGION,
-      DENO_DEPLOYMENT_ID: process.env.DENO_DEPLOYMENT_ID,
+      DENO_REGION: Deno.env.DENO_REGION,
+      DENO_DEPLOYMENT_ID: Deno.env.DENO_DEPLOYMENT_ID,
     },
   });
 
